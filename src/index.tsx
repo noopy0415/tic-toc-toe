@@ -1,28 +1,61 @@
 // 各モジュールの読み込み
+import { useState } from 'react';  // ①
 import { createRoot } from 'react-dom/client'
 import './index.css'
 
+type SquareState = string;
+
+type SquareProps = {
+  value: SquareState;
+  onClick: () => void;
+};
+
 // Squareコンポーネント
-// const Square = () => {
-function Square() {
+// Propsの受け取り 型もオブジェクトになる
+const Square = ({ value, onClick }: SquareProps) => {
   return (
-    <button className="square">
-      {/* ここに表示する文字を記述 */}
+    <button
+      className="square"
+      onClick={onClick}
+    >
+      {value}
     </button>
   );
 };
 
+type BoardState = SquareState[];
+
+type GameState = {
+  squares: BoardState;
+};
+
 // Boardコンポーネント
 const Board = () => {
-  const renderSquare = ({}) => (
-    <Square />
+  const [state, setState] = useState<GameState>({
+    squares: Array(9).fill(null)
+  })
+
+  const handleClick = (i: number) => {
+    const squares = state.squares.slice();
+    squares[i] = "X";
+    setState({ squares: squares });
+  };
+
+  // 引数を受け取ってコンポーネントに文字列を渡す
+  const renderSquare = (i: number) => (
+    // Props経由でvalueに文字列を渡す
+    <Square
+      // value={i.toString()}
+      value={state.squares[i]}
+      onClick={() => handleClick(i)}
+    />
   );
 
   return (
     <div>
       <div className="status">{"Next player: X"}</div>
       <div className="board-row">
-        {/* valueとして"O"を渡す */}
+        {/* valueとして数値を渡す */}
         {renderSquare(1)}
         {renderSquare(2)}
         {renderSquare(3)}
