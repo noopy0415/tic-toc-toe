@@ -25,52 +25,26 @@ const Square = ({ value, onClick }: SquareProps) => {
 
 type BoardState = SquareState[];
 
-type GameState = {
+
+type BoardProps = {
   squares: BoardState;
-  xIsNext: boolean;
+  onClick: (i: number) => void;
 };
 
 // Boardコンポーネント
-const Board = () => {
-  const [state, setState] = useState<GameState>({
-    squares: Array(9).fill(null),
-    xIsNext: true
-  })
-
-  // const status = "Next player: " + (state.xIsNext ? "X" : "O");
-  const winner = calculateWinner(state.squares);
-  let status;
-  if (winner) {
-    status = 'Winner: ' + winner;
-  } else {
-    status = 'Next player: ' + (state.xIsNext ? 'X' : 'O');
-  }
-
-  const handleClick = (i: number) => {
-    const squares = state.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
-      return;
-    }
-    squares[i] = state.xIsNext ? "X" : "O";
-    setState({
-      squares: squares,
-      xIsNext: !state.xIsNext
-    });
-  };
-
+const Board = (props:BoardProps) => {
   // 引数を受け取ってコンポーネントに文字列を渡す
   const renderSquare = (i: number) => (
     // Props経由でvalueに文字列を渡す
     <Square
       // value={i.toString()}
-      value={state.squares[i]}
-      onClick={() => handleClick(i)}
+      value={props.squares[i]}
+      onClick={() => props.onClick(i)}
     />
   );
 
   return (
     <div>
-      <div className="status">{status}</div>
       <div className="board-row">
         {/* valueとして数値を渡す */}
         {renderSquare(0)}
@@ -91,15 +65,60 @@ const Board = () => {
   );
 };
 
+type Step = {
+  squares: BoardState;
+};
+
+type GameState = {
+  history: Step[],
+  xIsNext: boolean;
+};
+
 // Gameコンポーネント
 const Game = () => {
+  const [state, setState] = useState<GameState>({
+    history: [{
+      squares: Array(9).fill(null),
+    }],
+    xIsNext: true
+  });
+
+
+  const handleClick = (i: number) => {
+    const current = state.history[state.history.length -1];
+    const squares = current.squares.slice();
+    if (calculateWinner(current.squares) || current.squares[i]) {
+      return;
+    }
+    squares[i] = state.xIsNext ? "X" : "O";
+    setState({
+      history: state.history.concat({
+        squares: squares
+      }),
+      xIsNext: !state.xIsNext
+    });
+  };
+
+  const current = state.history[state.history.length -1];
+  const winner = calculateWinner(current.squares);
+  let status;
+  if (winner) {
+    status = 'Winner: ' + winner;
+  } else {
+    status = 'Next player: ' + (state.xIsNext ? 'X' : 'O');
+  }
+
+
   return (
     <div className='game'>
       <div className='game-board'>
-        <Board />
+        <Board
+          squares={current.squares}
+          onClick={handleClick}
+        />
       </div>
       <div className='game-info'>
-        <div>{/* status */}</div>
+        <div>{status}</div>
         <ol>{/* TODO */}</ol>
       </div>
     </div>
