@@ -32,7 +32,7 @@ type BoardProps = {
 };
 
 // Boardコンポーネント
-const Board = (props:BoardProps) => {
+const Board = (props: BoardProps) => {
   // 引数を受け取ってコンポーネントに文字列を渡す
   const renderSquare = (i: number) => (
     // Props経由でvalueに文字列を渡す
@@ -70,8 +70,9 @@ type Step = {
 };
 
 type GameState = {
-  history: Step[],
+  history: Step[];
   xIsNext: boolean;
+  stepNumber: number;
 };
 
 // Gameコンポーネント
@@ -80,34 +81,58 @@ const Game = () => {
     history: [{
       squares: Array(9).fill(null),
     }],
-    xIsNext: true
+    xIsNext: true,
+    stepNumber: 0
   });
 
-
-  const handleClick = (i: number) => {
-    const current = state.history[state.history.length -1];
-    const squares = current.squares.slice();
-    if (calculateWinner(current.squares) || current.squares[i]) {
-      return;
-    }
-    squares[i] = state.xIsNext ? "X" : "O";
-    setState({
-      history: state.history.concat({
-        squares: squares
-      }),
-      xIsNext: !state.xIsNext
-    });
-  };
-
-  const current = state.history[state.history.length -1];
+  const history = state.history;
+  const current = history[state.stepNumber];
   const winner = calculateWinner(current.squares);
-  let status;
+
+  let status: string;
   if (winner) {
     status = 'Winner: ' + winner;
   } else {
     status = 'Next player: ' + (state.xIsNext ? 'X' : 'O');
   }
 
+  const handleClick = (i: number) => {
+    const history = state.history.slice(0, state.stepNumber + 1);
+    const current = history[history.length - 1];
+    const squares = current.squares.slice();
+    if (calculateWinner(squares) || squares[i]) {
+      return;
+    }
+    squares[i] = state.xIsNext ? "X" : "O";
+    setState({
+      history: history.concat({
+        squares: squares
+      }),
+      xIsNext: !state.xIsNext,
+      stepNumber: history.length
+    });
+  };
+
+  const moves = state.history.map((step, move) => {
+    const desc = move ?
+      'Go to move #' + move :
+      'Go to game start';
+    return (
+      <li key={move}>
+        <button onClick={() => jumpTo(move)}>
+          {desc}
+        </button>
+      </li>
+    );
+  });
+
+  const jumpTo = (step: number) => {
+    setState((prev) => ({
+      ...prev,
+      stepNumber: step,
+      xIsNext: (step % 2) === 0
+    }));
+  };
 
   return (
     <div className='game'>
@@ -119,7 +144,7 @@ const Game = () => {
       </div>
       <div className='game-info'>
         <div>{status}</div>
-        <ol>{/* TODO */}</ol>
+        <ol>{moves}</ol>
       </div>
     </div>
   );
@@ -132,7 +157,7 @@ const root = createRoot(container!);
 root.render(<Game />);
 
 // 勝者確認関数
-const calculateWinner = (squares: BoardState):SquareState => {
+const calculateWinner = (squares: BoardState): SquareState => {
   const lines = [
     [0, 1, 2],
     [3, 4, 5],
